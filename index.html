@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(120deg, #f6f9fc, #e9eff5);
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .session-label {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .timer-container {
+            position: relative;
+            width: 240px;
+            height: 240px;
+            margin-bottom: 20px;
+        }
+
+        svg {
+            transform: rotate(-90deg);
+        }
+
+        circle {
+            fill: none;
+            stroke-width: 15;
+            stroke-linecap: round;
+        }
+
+        #background-ring {
+            stroke: #e6e6e6;
+        }
+
+        #progress-ring {
+            stroke: #ff6347;
+            transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+        }
+
+        .time-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .controls {
+            margin-top: 10px;
+        }
+
+        button {
+            margin: 0 5px;
+            padding: 12px 24px;
+            font-size: 1em;
+            color: #ffffff;
+            background: #ff6347;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        button:hover {
+            background: #ff8266;
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="session-label" id="session-label">Work</div>
+        <div class="timer-container">
+            <svg width="240" height="240">
+                <circle id="background-ring" cx="120" cy="120" r="105"></circle>
+                <circle id="progress-ring" cx="120" cy="120" r="105"></circle>
+            </svg>
+            <div class="time-label" id="time-display">25:00</div>
+        </div>
+        <div class="controls">
+            <button id="start-btn">Start</button>
+            <button id="pause-btn">Pause</button>
+            <button id="reset-btn">Reset</button>
+        </div>
+    </div>
+    <script>
+        const WORK_TIME = 25 * 60; // 25 minutes in seconds
+        const BREAK_TIME = 5 * 60; // 5 minutes in seconds
+
+        let isRunning = false;
+        let isWorkSession = true;
+        let remaining = WORK_TIME;
+        let intervalId = null;
+
+        const progressRing = document.getElementById('progress-ring');
+        const sessionLabel = document.getElementById('session-label');
+        const radius = progressRing.r.baseVal.value;
+        const circumference = 2 * Math.PI * radius;
+        progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+        progressRing.style.strokeDashoffset = '0';
+
+        function updateProgress() {
+            const total = isWorkSession ? WORK_TIME : BREAK_TIME;
+            const offset = circumference - (remaining / total) * circumference;
+            progressRing.style.strokeDashoffset = offset;
+            document.getElementById('time-display').textContent = formatTime(remaining);
+        }
+
+        function switchSession() {
+            isWorkSession = !isWorkSession;
+            remaining = isWorkSession ? WORK_TIME : BREAK_TIME;
+            sessionLabel.textContent = isWorkSession ? 'Work' : 'Break';
+            progressRing.style.stroke = isWorkSession ? '#ff6347' : '#4caf50';
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function tick() {
+            if (remaining > 0) {
+                remaining--;
+                updateProgress();
+            } else {
+                switchSession();
+                updateProgress();
+            }
+        }
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            if (!isRunning) {
+                intervalId = setInterval(tick, 1000);
+                isRunning = true;
+            }
+        });
+
+        document.getElementById('pause-btn').addEventListener('click', () => {
+            if (isRunning) {
+                clearInterval(intervalId);
+                isRunning = false;
+            }
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            clearInterval(intervalId);
+            isRunning = false;
+            isWorkSession = true;
+            remaining = WORK_TIME;
+            sessionLabel.textContent = 'Work';
+            progressRing.style.stroke = '#ff6347';
+            updateProgress();
+        });
+
+        // Initialize progress ring and session label on load
+        sessionLabel.textContent = 'Work';
+        progressRing.style.stroke = '#ff6347';
+        updateProgress();
+    </script>
+</body>
+</html>
