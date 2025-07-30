@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+        }
+        .timer-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 20px;
+        }
+        svg {
+            transform: rotate(-90deg);
+        }
+        circle {
+            fill: none;
+            stroke-width: 15;
+            stroke-linecap: round;
+        }
+        #background-ring {
+            stroke: #e6e6e6;
+        }
+        #progress-ring {
+            stroke: #ff6347;
+            transition: stroke-dashoffset 1s linear;
+        }
+        .time-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2em;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="timer-container">
+        <svg width="200" height="200">
+            <circle id="background-ring" cx="100" cy="100" r="90"></circle>
+            <circle id="progress-ring" cx="100" cy="100" r="90"></circle>
+        </svg>
+        <div class="time-label" id="time-display">25:00</div>
+    </div>
+    <div>
+        <button id="start-btn">Start</button>
+        <button id="pause-btn">Pause</button>
+        <button id="reset-btn">Reset</button>
+    </div>
+    <script>
+        const WORK_TIME = 25 * 60; // 25 minutes in seconds
+        const BREAK_TIME = 5 * 60; // 5 minutes in seconds
+
+        let isRunning = false;
+        let isWorkSession = true;
+        let remaining = WORK_TIME;
+        let intervalId = null;
+
+        const progressRing = document.getElementById('progress-ring');
+        const radius = progressRing.r.baseVal.value;
+        const circumference = 2 * Math.PI * radius;
+        progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+        progressRing.style.strokeDashoffset = '0';
+
+        function updateProgress() {
+            const total = isWorkSession ? WORK_TIME : BREAK_TIME;
+            const offset = circumference - (remaining / total) * circumference;
+            progressRing.style.strokeDashoffset = offset;
+            document.getElementById('time-display').textContent = formatTime(remaining);
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function tick() {
+            if (remaining > 0) {
+                remaining--;
+                updateProgress();
+            } else {
+                isWorkSession = !isWorkSession;
+                remaining = isWorkSession ? WORK_TIME : BREAK_TIME;
+                updateProgress();
+            }
+        }
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            if (!isRunning) {
+                intervalId = setInterval(tick, 1000);
+                isRunning = true;
+            }
+        });
+
+        document.getElementById('pause-btn').addEventListener('click', () => {
+            if (isRunning) {
+                clearInterval(intervalId);
+                isRunning = false;
+            }
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            clearInterval(intervalId);
+            isRunning = false;
+            isWorkSession = true;
+            remaining = WORK_TIME;
+            updateProgress();
+        });
+
+        // Initialize progress ring on load
+        updateProgress();
+    </script>
+</body>
+</html>
